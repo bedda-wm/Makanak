@@ -36,8 +36,11 @@ It predicts property prices based on user inputs and allows users to explore sim
 ## 📁 Project Structure
 
 makanak/
+
 ├── makanak/ # frontend
+
 ├── makanak-api/ # backend
+
 ├── README.md
 
 ---
