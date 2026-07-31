@@ -1,123 +1,212 @@
 # Makanak 🏠
 
-Makanak is a machine learning-powered real estate valuation platform for the Egyptian market.  
-It predicts property prices based on user inputs and allows users to explore similar listings on Dubizzle.
+Machine learning-powered real estate valuation platform for the Egyptian market.
+
+Makanak predicts apartment prices using a trained machine learning model, allowing users to estimate their property's value based on location, size, amenities, and other key features. The platform also generates similar Dubizzle listings for quick market comparison.
+
+---
+
+## 📸 Screenshots
+
+### Landing Page
+
+<p align="center">
+  <img src="assets/hero.png" width="900" alt="Landing Page">
+</p>
+
+### Property Details Form
+
+<p align="center">
+  <img src="assets/property-details.png" width="900" alt="Property Details">
+</p>
+
+### Property Valuation Result
+
+<p align="center">
+  <img src="assets/result.png" width="900" alt="Prediction Result">
+</p>
+
+### User Authentication
+
+<p align="center">
+  <img src="assets/login.png" width="900" alt="Login Page">
+</p>
 
 ---
 
 ## 🚀 Features
 
-- Property price prediction using a trained ML model
-- Flask backend API
-- React (Vite) frontend
-- User authentication (signup/login)
-- Saved valuation history
-- Dubizzle search link generation for similar listings
+- 🤖 Machine learning-powered property price prediction
+- 🏠 Multi-step property valuation form
+- 🔐 User authentication (Sign up / Login)
+- 💾 Save and manage previous valuations
+- 🔍 Generate similar property listings on Dubizzle
+- 🌍 Modern responsive React interface
+- ⚡ RESTful Flask API
 
 ---
 
-## 🧠 Tech Stack
+## 🧠 Machine Learning
+
+The valuation engine is built using **HistGradientBoostingRegressor** from Scikit-learn.
+
+### Model Highlights
+
+- HistGradientBoostingRegressor
+- Log-transformed target variable
+- Feature engineering
+- One-Hot Encoding for categorical features
+- Monotonic constraints
+- 5-Fold Cross Validation
+
+### Features Used
+
+- Area
+- Bedrooms
+- Bathrooms
+- District
+- Compound Status
+- Amenities
+- Engineered features (room density, amenity density, etc.)
+
+---
+
+## 🛠 Tech Stack
 
 ### Backend
 
 - Flask
-- Scikit-learn (ML model)
+- Scikit-learn
 - SQLite
 - Joblib
+- Pandas
+- NumPy
 
 ### Frontend
 
 - React (Vite)
 - Fetch API
-- Tailwind / CSS
+- CSS
 
 ---
 
 ## 📁 Project Structure
 
-makanak/
-├── makanak/ # frontend
-├── makanak-api/ # backend
-├── README.md
+```text
+Makanak/
+│
+├── makanak/          # React Frontend
+├── makanak-api/      # Flask Backend + ML Model
+└── README.md
+```
 
 ---
 
-# ⚙️ Backend Setup (Flask API)
+# ⚙ Backend Setup
 
 ## 1. Navigate to backend
 
+```bash
 cd makanak-api
+```
 
 ## 2. Create virtual environment
 
+```bash
 python3 -m venv .venv
+```
 
 ## 3. Activate environment
 
-### Mac/Linux
+### macOS / Linux
 
+```bash
 source .venv/bin/activate
+```
 
 ### Windows
 
+```bash
 .venv\Scripts\activate
+```
 
 ## 4. Install dependencies
 
+```bash
 pip install -r requirements.txt
+```
 
-(If requirements.txt is missing, run:)
+If the requirements file is unavailable:
 
+```bash
 pip install flask joblib scikit-learn pandas numpy
-pip freeze > requirements.txt
+```
 
-## 5. Run backend
+## 5. Run the backend
 
+```bash
 python app.py
+```
 
-Server will run on:
+Backend runs on:
 
+```
 http://127.0.0.1:5050
+```
 
 ---
 
-# 💻 Frontend Setup (React)
+# 💻 Frontend Setup
 
 ## 1. Navigate to frontend
 
+```bash
 cd makanak
+```
 
-## 2. Install dependencies
+## 2. Install packages
 
+```bash
 npm install
+```
 
-## 3. Run development server
+## 3. Start development server
 
+```bash
 npm run dev
+```
 
-Frontend will run on:
+Frontend runs on:
 
+```
 http://localhost:5173
+```
 
 ---
 
 # 🔗 API Endpoints
 
-### Auth
+## Authentication
 
-- POST `/auth/signup`
-- POST `/auth/login`
-- POST `/auth/logout`
-- GET `/auth/me`
+| Method | Endpoint |
+|--------|----------|
+| POST | `/auth/signup` |
+| POST | `/auth/login` |
+| POST | `/auth/logout` |
+| GET | `/auth/me` |
 
-### Predictions
+## Prediction
 
-- POST `/predict`
+| Method | Endpoint |
+|--------|----------|
+| POST | `/predict` |
 
-### Valuations
+## Saved Valuations
 
-- GET `/valuations`
-- GET `/valuations/:id`
+| Method | Endpoint |
+|--------|----------|
+| GET | `/valuations` |
+| GET | `/valuations/:id` |
 
 ---
 
@@ -137,31 +226,26 @@ http://localhost:5173
   "payment_option": "Cash",
   "completion_status": "Ready"
 }
-
-📊 Machine Learning Model
-
-Algorithm: HistGradientBoostingRegressor
-Target: Log-transformed property price
-Features:
-Area
-Bedrooms & Bathrooms
-District
-Amenities
-Compound detection
-Monotonic constraints ensure realistic predictions
-
-🌍 Similar Listings Feature
-
-After each valuation, the app generates a Dubizzle search link based on:
-
-Predicted price ± 500,000 EGP
-Area ± 20 sqm
-Same bedrooms & bathrooms
-Same district
-
-🛠️ Notes
-
-This project is for educational purposes
-Data was scraped from Dubizzle listings
-Predictions are estimates, not exact valuations
 ```
+
+---
+
+# 🔍 Similar Listings
+
+After every valuation, Makanak automatically generates a Dubizzle search URL using:
+
+- Predicted price ±500,000 EGP
+- Area ±20 m²
+- Same district
+- Same number of bedrooms
+- Same number of bathrooms
+
+This allows users to compare their estimated property value with current market listings.
+
+---
+
+# 📌 Notes
+
+- This project was developed for academic purposes.
+- Data was collected from publicly available Dubizzle apartment listings.
+- Predictions represent estimated market values and should not be considered professional financial advice.
