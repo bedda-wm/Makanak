@@ -1,0 +1,25 @@
+# Frontend dependencies and build
+node_modules/
+dist/
+
+# Python environment and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
