@@ -8,7 +8,7 @@ Makanak predicts apartment prices using a trained machine learning model, allowi
 
 ## 📸 Screenshots
 
-### Landing Page
+### Hero Section
 
 <p align="center">
   <img src="assets/hero.png" width="900" alt="Landing Page">
