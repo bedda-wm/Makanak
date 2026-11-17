@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-import sqlite3
 from datetime import datetime, timezone
 from functools import wraps
 
@@ -66,7 +65,7 @@ def signup():
 
     try:
         user_id = db_mod.create_user(name, email, password_hash, created_at)
-    except sqlite3.IntegrityError:
+    except db_mod.IntegrityError:
         return jsonify({"error": "An account with this email already exists."}), 409
 
     session.clear()

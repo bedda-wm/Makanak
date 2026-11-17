@@ -13,7 +13,7 @@ __pycache__/
 *.sqlite
 *.sqlite3
 
-# Environment variables
+# Environment variables — real values never leave this machine
 .env
 .env.*
 
@@ -23,3 +23,11 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# Vercel
+.vercel/
+
+# Templates and public build config are tracked on purpose.
+# These negations must stay last so nothing above re-ignores them.
+!.env.example
+!.env.production

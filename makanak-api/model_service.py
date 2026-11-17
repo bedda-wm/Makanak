@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import joblib
 import numpy as np
 import pandas as pd
 
-BUNDLE = joblib.load("models/dubizzle_price_model.joblib")
+# Absolute path: serverless runtimes do not guarantee a particular working
+# directory, so never resolve the model bundle relative to the process cwd.
+MODEL_PATH = Path(__file__).resolve().parent / "models" / "dubizzle_price_model.joblib"
+
+BUNDLE = joblib.load(MODEL_PATH)
 PIPELINE = BUNDLE["pipeline"]
 TOP_DISTRICTS = set(BUNDLE["top_districts"])
 

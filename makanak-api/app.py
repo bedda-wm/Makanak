@@ -3,7 +3,8 @@ Makanak price API (Flask): health, ML prediction, session auth, saved valuations
 
 HTTP contract for the Vite + React app (dev: http://localhost:5173):
 
-  Base URL: set VITE_API_URL to http://localhost:<DEFAULT_PORT> (see DEFAULT_PORT).
+  Base URL: set VITE_API_URL to http://localhost:<DEFAULT_PORT> locally (see DEFAULT_PORT),
+  or to /api in production, where Vercel serves this API under the frontend's origin.
 
   The frontend must send credentials on API calls, e.g. fetch(url, { credentials: 'include' }).
 
@@ -20,6 +21,7 @@ HTTP contract for the Vite + React app (dev: http://localhost:5173):
 '''
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime, timezone
 
@@ -32,35 +34,86 @@ from auth import auth_bp
 from model_service import predict_price, to_float
 from valuations import valuations_bp
 
+log = logging.getLogger(__name__)
+
 DEFAULT_PORT = 5050
 
-# Session cookies are host-only for the API origin (e.g. localhost:5050). Use the same
-# hostname for VITE_API_URL as the page (localhost vs 127.0.0.1) so the browser sends cookies.
-# SameSite=Lax allows cross-origin credentialed requests between localhost ports in modern browsers.
-app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get(
-    "FLASK_SECRET_KEY",
-    "dev-only-set-FLASK_SECRET_KEY-for-production",
-)
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = False  # OK for local HTTP; use HTTPS + True in production
+# On Vercel the frontend and this API share one origin: the platform rewrites
+# /api/* to this service and the service still receives the original path.
+# The middleware below strips that prefix so the routes stay mount-agnostic.
+API_PATH_PREFIX = os.environ.get("API_PATH_PREFIX", "/api").rstrip("/")
 
-CORS(
-    app,
-    origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
-    supports_credentials=True,
-    methods=["GET", "POST", "OPTIONS", "DELETE"],
-    allow_headers=["Content-Type", "Accept"],
-)
+IS_SERVERLESS = bool(os.environ.get("VERCEL"))
+
+
+class StripPathPrefix:
+    """Serve the app under ``prefix`` without changing any route decorator."""
+
+    def __init__(self, wsgi_app, prefix: str):
+        self.wsgi_app = wsgi_app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        if self.prefix and (path == self.prefix or path.startswith(self.prefix + "/")):
+            environ["SCRIPT_NAME"] = environ.get("SCRIPT_NAME", "") + self.prefix
+            environ["PATH_INFO"] = path[len(self.prefix):] or "/"
+        return self.wsgi_app(environ, start_response)
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+app = Flask(__name__)
+
+secret_key = os.environ.get("FLASK_SECRET_KEY")
+if not secret_key:
+    if IS_SERVERLESS:
+        raise RuntimeError(
+            "FLASK_SECRET_KEY must be set in production; without it every "
+            "deployment would invalidate all existing login sessions."
+        )
+    secret_key = "dev-only-set-FLASK_SECRET_KEY-for-production"
+app.config["SECRET_KEY"] = secret_key
+
+# Same-origin in production, so SameSite=Lax is enough and keeps the cookie
+# out of cross-site requests. Secure is on everywhere except local HTTP.
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
+app.config["SESSION_COOKIE_SECURE"] = _env_flag("SESSION_COOKIE_SECURE", IS_SERVERLESS)
+
+if API_PATH_PREFIX:
+    app.wsgi_app = StripPathPrefix(app.wsgi_app, API_PATH_PREFIX)
+
+# Only needed when the frontend is served from a different origin (local Vite
+# dev server, or a separate deployment). In production the app and the API
+# share one origin, so no origin is allowed to send credentialed cross-site
+# requests unless CORS_ORIGINS says so explicitly.
+_default_cors = "" if IS_SERVERLESS else "http://localhost:5173,http://127.0.0.1:5173"
+_cors_origins = [
+    o.strip() for o in os.environ.get("CORS_ORIGINS", _default_cors).split(",") if o.strip()
+]
+if _cors_origins:
+    CORS(
+        app,
+        origins=_cors_origins,
+        supports_credentials=True,
+        methods=["GET", "POST", "OPTIONS", "DELETE"],
+        allow_headers=["Content-Type", "Accept"],
+    )
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(valuations_bp)
 
-db_mod.init_db()
+if _env_flag("AUTO_INIT_DB", True):
+    try:
+        db_mod.init_db()
+    except Exception:  # pragma: no cover - never let schema setup break /health
+        log.exception("init_db failed; database-backed routes may be unavailable")
 
 
 def _optional_float_for_db(value):
